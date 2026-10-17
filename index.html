@@ -31,11 +31,17 @@ main{display:grid;grid-template-columns:300px 1fr;gap:16px;padding:16px;max-widt
 @media(max-width:600px){.op{grid-template-columns:24px 1fr auto}.kn{grid-column:2}}
 .kn label{margin:0;color:var(--tx)}.im{display:flex;gap:8px;align-items:center;margin-top:6px}.im img{height:44px;border-radius:4px}
 .pi{max-width:100%;max-height:220px;border-radius:6px}.pt{max-height:90px;border-radius:4px;margin-top:4px}
-.po{display:block;color:var(--tx);padding:6px 0}table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid var(--bd);padding:6px;text-align:left}
+.po{display:block;color:var(--tx);padding:6px 0}table{border-collapse:collapse}table.kt{width:100%}td,th{border:1px solid var(--bd);padding:6px;text-align:left;vertical-align:top}
+.tb{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:6px 16px;padding:8px 10px}.tb span{display:flex;gap:3px;flex-wrap:wrap}
+.tb button{padding:4px 9px;font-weight:400;background:transparent;color:var(--tx);border:1px solid var(--bd)}.tb button:hover{background:var(--sel)}
+.fld{margin:8px 0;font-size:.92rem;color:var(--mu)}.fld .rt{margin-top:3px}
+.rt{min-height:44px;background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:8px;color:var(--tx)}.rt.sm{min-height:36px}.rt:empty::before{content:attr(data-ph);color:var(--mu)}
+.mf{display:inline-block;padding:0 2px;border-radius:3px;cursor:pointer}.rt .mf:hover{background:var(--sel)}.ri>*{margin:.3em 0}.ri{overflow-x:auto}
 .narrow{max-width:380px;margin:12vh auto}
 #toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--tx);color:var(--bg);padding:10px 16px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw}
 #toast.show{opacity:1}#toast.err{background:var(--er);color:#fff}
 </style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 </head>
 <body>
 <form id="lg" class="card narrow">
@@ -52,12 +58,23 @@ main{display:grid;grid-template-columns:300px 1fr;gap:16px;padding:16px;max-widt
       <div class="row"><input id="cari" placeholder="Cari soal" aria-label="Cari soal"><button id="baru" type="button">Soal baru</button></div>
       <div id="daftar"></div>
     </aside>
-    <section><form id="f" class="card"></form><div id="pv" class="card"></div></section>
+    <section>
+    <div id="tb" class="card tb" aria-label="Alat format teks dan rumus">
+      <span><button data-x="bold"><b>B</b></button><button data-x="italic"><i>I</i></button><button data-x="underline"><u>U</u></button><button data-x="superscript" title="Pangkat, misalnya m3 menjadi m³">x²</button><button data-x="subscript" title="Indeks bawah">x₂</button></span>
+      <span><button data-x="justifyLeft">Kiri</button><button data-x="justifyCenter">Tengah</button><button data-x="justifyRight">Kanan</button><button data-x="justifyFull">Rata</button></span>
+      <span><button data-x="insertUnorderedList">Daftar</button><button data-x="insertOrderedList">Nomor</button><button data-x="removeFormat">Hapus format</button></span>
+      <span><button data-a="tabel">Tabel</button><button data-a="baris">+Baris</button><button data-a="kolom">+Kolom</button><button data-a="hapustabel">Hapus tabel</button></span>
+      <span><button data-a="pecahan">Pecahan</button><button data-a="campuran">Campuran</button><button data-a="akar">Akar</button><button data-a="rumus">Rumus lain</button></span>
+      <span><button data-s="×">×</button><button data-s="÷">÷</button><button data-s="±">±</button><button data-s="≤">≤</button><button data-s="≥">≥</button><button data-s="≠">≠</button><button data-s="π">π</button><button data-s="°">°</button><button data-s="√">√</button></span>
+    </div>
+    <form id="f" class="card"></form><div id="pv" class="card"></div></section>
   </main>
 </div>
 <div id="toast" role="status"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
 <script>
 const SB_URL='https://owposvwxcmkvxhobtemv.supabase.co';
 const SB_KEY='sb_publishable_4X4gb8JhUISDj4-nH_NFrQ_GLV87x6q';
@@ -70,6 +87,13 @@ const T={pg:'Pilihan ganda',mcma:'MCMA',kategori:'Kategori'};
 const baris=()=>({teks:'',gambar:'',prev:'',file:null,benar:false,kat:0});
 const kosong=()=>({id:null,tipe:'pg',mapel:'',kelas:'',topik:'',teks:'',gambar:'',prev:'',file:null,labels:['Benar','Salah'],bobot:1,pembahasan:'',opsi:[baris(),baris(),baris(),baris()]});
 const st={user:null,list:[],cur:kosong()};
+DOMPurify.addHook('afterSanitizeAttributes',n=>{if(n.hasAttribute&&n.hasAttribute('style')){const m=/text-align:\s*(left|center|right|justify)/.exec(n.getAttribute('style'));m?n.setAttribute('style','text-align:'+m[1]):n.removeAttribute('style')}});
+const bersih=h=>DOMPurify.sanitize(h||'',{ALLOWED_TAGS:['b','strong','i','em','u','sub','sup','br','p','div','span','ul','ol','li','table','tbody','thead','tr','td','th'],ALLOWED_ATTR:['style','class','data-tex','colspan','rowspan']});
+const ringkas=h=>{const d=document.createElement('div');d.innerHTML=bersih(h);d.querySelectorAll('.mf').forEach(m=>m.textContent=m.dataset.tex);return d.textContent};
+const hampa=h=>!/class="mf"|<table/.test(h||'')&&ringkas(h).trim()==='';
+function rumusi(root){root.querySelectorAll('.mf').forEach(m=>{m.innerHTML='';katex.render(m.dataset.tex||'',m,{throwOnError:false})})}
+function prep(e){e.querySelectorAll('.mf').forEach(m=>m.contentEditable='false');rumusi(e)}
+function serial(e){const k=e.cloneNode(true);k.querySelectorAll('.mf').forEach(m=>{m.textContent='';m.removeAttribute('contenteditable')});const h=bersih(k.innerHTML).trim();return /^(<br>|\s)*$/.test(h)?'':h}
 
 function toast(m,e){const t=$('#toast');t.textContent=m;t.className=e?'err show':'show';clearTimeout(toast.t);toast.t=setTimeout(()=>t.className='',4000)}
 
@@ -91,8 +115,8 @@ async function muatDaftar(){
   const {data,error}=await db.from('soal').select('id,tipe,teks,mapel,kelas').order('dibuat_at',{ascending:false});
   if(error)return toast(error.message,true);st.list=data;daftar()}
 function daftar(){const q=$('#cari').value.toLowerCase();
-  $('#daftar').innerHTML=st.list.filter(s=>s.teks.toLowerCase().includes(q)).map(s=>
-    `<div class="it ${s.id===st.cur.id?'on':''}" data-id="${s.id}"><small>${T[s.tipe]}${s.kelas?', kelas '+s.kelas:''}${s.mapel?', '+esc(s.mapel):''}</small>${esc(s.teks.slice(0,90))}</div>`).join('')
+  $('#daftar').innerHTML=st.list.filter(s=>ringkas(s.teks).toLowerCase().includes(q)).map(s=>
+    `<div class="it ${s.id===st.cur.id?'on':''}" data-id="${s.id}"><small>${T[s.tipe]}${s.kelas?', kelas '+s.kelas:''}${s.mapel?', '+esc(s.mapel):''}</small>${esc(ringkas(s.teks).slice(0,90))}</div>`).join('')
     ||'<p class="mu">Belum ada soal. Mulai dengan menulis soal pertama.</p>'}
 $('#cari').oninput=daftar;
 $('#daftar').onclick=e=>{const d=e.target.closest('.it');if(d)buka(d.dataset.id)};
@@ -117,33 +141,34 @@ function form(){const c=st.cur,kat=c.tipe==='kategori';
 <label>Kelas<input name="kelas" type="number" min="1" max="6" value="${esc(c.kelas)}"></label>
 <label>Topik<input name="topik" value="${esc(c.topik)}"></label>
 <label>Bobot<input name="bobot" type="number" min="0.5" step="0.5" value="${esc(c.bobot)}"></label></div>
-<label>Pertanyaan<textarea name="teks" rows="3">${esc(c.teks)}</textarea></label>${imgBox('soal',0,c)}
+<div class="fld">Pertanyaan<div class="rt" contenteditable="true" role="textbox" aria-label="Pertanyaan" data-f="teks" data-ph="Tulis pertanyaan di sini">${bersih(c.teks)}</div></div>${imgBox('soal',0,c)}
 ${kat?`<label>Pilihan kategori, pisahkan dengan koma<input name="labels" value="${esc(c.labels.join(', '))}"></label>`:''}
 <h3>${kat?'Pernyataan':'Pilihan jawaban'}</h3>
 ${c.opsi.map((o,i)=>`<div class="op"><b>${kat?i+1:String.fromCharCode(65+i)}</b>
-<div><input name="ot${i}" placeholder="${kat?'Tulis pernyataan':'Tulis pilihan'}" value="${esc(o.teks)}" aria-label="Teks ${i+1}">${imgBox('opsi',i,o)}</div>
+<div><div class="rt sm" contenteditable="true" role="textbox" data-f="ot${i}" data-ph="${kat?'Tulis pernyataan':'Tulis pilihan'}" aria-label="Teks ${i+1}">${bersih(o.teks)}</div>${imgBox('opsi',i,o)}</div>
 <div class="kn">${c.tipe==='pg'?`<label><input type="radio" name="benar" value="${i}" ${o.benar?'checked':''}> Jawaban benar</label>`
  :c.tipe==='mcma'?`<label><input type="checkbox" name="ck${i}" ${o.benar?'checked':''}> Jawaban benar</label>`
  :`<select name="kat${i}" aria-label="Kategori yang benar">${c.labels.map((l,j)=>`<option value="${j}" ${o.kat===j?'selected':''}>${esc(l)}</option>`).join('')}</select>`}</div>
 <button type="button" class="ghost" data-act="rm" data-i="${i}" aria-label="Hapus baris">Hapus</button></div>`).join('')}
 <button type="button" class="ghost" data-act="add">Tambah ${kat?'pernyataan':'pilihan'}</button>
-<label>Pembahasan, opsional<textarea name="pembahasan" rows="2">${esc(c.pembahasan)}</textarea></label>
+<div class="fld">Pembahasan, opsional<div class="rt" contenteditable="true" role="textbox" aria-label="Pembahasan" data-f="pembahasan" data-ph="Tulis pembahasan jika ada">${bersih(c.pembahasan)}</div></div>
 <div class="row"><button type="submit" id="sv">Simpan soal</button>${c.id?'<button type="button" class="danger" data-act="del">Hapus soal</button>':''}</div>`;
-  pratinjau()}
+  $('#f').querySelectorAll('.rt').forEach(prep);pratinjau()}
 
 function collect(){const f=$('#f'),c=st.cur,v=n=>f.elements[n]?.value??'';
-  c.tipe=v('tipe');c.mapel=v('mapel');c.kelas=v('kelas');c.topik=v('topik');c.bobot=v('bobot');c.teks=v('teks');c.pembahasan=v('pembahasan');
+  c.tipe=v('tipe');c.mapel=v('mapel');c.kelas=v('kelas');c.topik=v('topik');c.bobot=v('bobot');const rt=n=>serial(f.querySelector('[data-f="'+n+'"]'));c.teks=rt('teks');c.pembahasan=rt('pembahasan');
   if(c.tipe==='kategori'&&f.elements.labels)c.labels=v('labels').split(',').map(s=>s.trim()).filter(Boolean);
   const sel=f.elements.benar?.value;
-  c.opsi.forEach((o,i)=>{o.teks=v('ot'+i);
+  c.opsi.forEach((o,i)=>{o.teks=rt('ot'+i);
     if(c.tipe==='pg')o.benar=String(i)===sel;else if(c.tipe==='mcma')o.benar=!!f.elements['ck'+i]?.checked;else o.kat=+v('kat'+i)||0})}
 
 function pratinjau(){const c=st.cur,gb=o=>src(o)?`<br><img class="pt" src="${esc(src(o))}" alt="">`:'';
-  $('#pv').innerHTML=`<h3>Pratinjau tampilan siswa</h3><p>${esc(c.teks)||'<span class="mu">Pertanyaan akan tampil di sini.</span>'}</p>`
+  $('#pv').innerHTML=`<h3>Pratinjau tampilan siswa</h3><div class="ri">${hampa(c.teks)?'<span class="mu">Pertanyaan akan tampil di sini.</span>':bersih(c.teks)}</div>`
   +(src(c)?`<img class="pi" src="${esc(src(c))}" alt="">`:'')
   +(c.tipe==='kategori'
-    ?`<table><tr><th></th>${c.labels.map(l=>`<th>${esc(l)}</th>`).join('')}</tr>${c.opsi.map(o=>`<tr><td>${esc(o.teks)}${gb(o)}</td>${c.labels.map(()=>'<td><input type="radio" disabled></td>').join('')}</tr>`).join('')}</table>`
-    :c.opsi.map(o=>`<label class="po"><input type="${c.tipe==='pg'?'radio':'checkbox'}" disabled> ${esc(o.teks)}${gb(o)}</label>`).join(''))}
+    ?`<table class="kt"><tr><th></th>${c.labels.map(l=>`<th>${esc(l)}</th>`).join('')}</tr>${c.opsi.map(o=>`<tr><td><div class="ri">${bersih(o.teks)}</div>${gb(o)}</td>${c.labels.map(()=>'<td><input type="radio" disabled></td>').join('')}</tr>`).join('')}</table>`
+    :c.opsi.map(o=>`<label class="po" style="display:flex;gap:8px"><input type="${c.tipe==='pg'?'radio':'checkbox'}" disabled><span class="ri">${bersih(o.teks)}${gb(o)}</span></label>`).join(''));
+  rumusi($('#pv'))}
 
 /* ---------- gambar ---------- */
 async function kompres(file,maxW=900){
@@ -173,8 +198,8 @@ F.onsubmit=e=>{e.preventDefault();simpan()};
 
 /* ---------- simpan & hapus ---------- */
 function validasi(c){
-  if(!c.teks.trim())return'Pertanyaan belum diisi.';
-  if(c.opsi.some(o=>!o.teks.trim()&&!src(o)))return'Ada pilihan atau pernyataan yang masih kosong.';
+  if(hampa(c.teks))return'Pertanyaan belum diisi.';
+  if(c.opsi.some(o=>hampa(o.teks)&&!src(o)))return'Ada pilihan atau pernyataan yang masih kosong.';
   const n=c.opsi.filter(o=>o.benar).length;
   if(c.tipe==='pg'&&n!==1)return'Pilihan ganda harus punya tepat 1 jawaban benar.';
   if(c.tipe==='mcma'&&n<2)return'MCMA harus punya minimal 2 jawaban benar.';
@@ -204,6 +229,41 @@ async function hapus(){
   const {error}=await db.from('soal').delete().eq('id',st.cur.id);
   if(error)return toast('Gagal menghapus: '+error.message,true);
   toast('Soal dihapus.');st.cur=kosong();await muatDaftar();form()}
+
+/* ---------- toolbar format & rumus ---------- */
+document.addEventListener('focusin',e=>{if(e.target.classList?.contains('rt'))st.fokus=e.target});
+document.addEventListener('selectionchange',()=>{const s=getSelection();if(s.rangeCount&&st.fokus?.contains(s.anchorNode))st.rng=s.getRangeAt(0).cloneRange()});
+const ubah=()=>st.fokus.dispatchEvent(new Event('input',{bubbles:true}));
+function pulih(){st.fokus.focus();if(st.rng){const s=getSelection();s.removeAllRanges();s.addRange(st.rng)}}
+function sisip(h){if(!st.fokus?.isConnected)return toast('Klik dulu di kolom yang ingin diisi.',true);
+  pulih();document.execCommand('insertHTML',false,h);prep(st.fokus);ubah()}
+const rumus=t=>t&&sisip(`<span class="mf" data-tex="${esc(t)}"></span>&nbsp;`);
+const tanya=(p,d)=>prompt(p,d||'');
+function sel(){const n=st.rng?.startContainer,el=n&&(n.nodeType===1?n:n.parentElement),td=el&&st.fokus?.contains(el)?el.closest('td,th'):null;
+  if(!td)toast('Klik dulu di dalam sel tabel.',true);return td}
+const AKSI={
+ pecahan(){const a=tanya('Pembilang (angka atas)'),b=a&&tanya('Penyebut (angka bawah)');a&&b&&rumus(`\\frac{${a}}{${b}}`)},
+ campuran(){const w=tanya('Bilangan bulat'),a=w&&tanya('Pembilang'),b=a&&tanya('Penyebut');w&&a&&b&&rumus(`${w}\\frac{${a}}{${b}}`)},
+ akar(){const a=tanya('Angka di bawah tanda akar');a&&rumus(`\\sqrt{${a}}`)},
+ rumus(){rumus(tanya('Tulis rumus dengan format LaTeX, misalnya x^{2}+3x=10'))},
+ tabel(){const r=+tanya('Jumlah baris','3'),k=+tanya('Jumlah kolom','3');
+  if(r>0&&k>0&&r<=20&&k<=10)sisip('<table>'+('<tr>'+'<td><br></td>'.repeat(k)+'</tr>').repeat(r)+'</table><p><br></p>')},
+ baris(){const td=sel();if(!td)return;const tr=td.parentElement,n=tr.cloneNode(true);n.querySelectorAll('td,th').forEach(x=>x.innerHTML='<br>');tr.after(n);ubah()},
+ kolom(){const td=sel();if(!td)return;const i=td.cellIndex;td.closest('table').querySelectorAll('tr').forEach(r=>{const c=document.createElement('td');c.innerHTML='<br>';r.cells[i]?.after(c)});ubah()},
+ hapustabel(){const td=sel();if(!td)return;td.closest('table').remove();ubah()}};
+$('#tb').addEventListener('mousedown',e=>e.preventDefault());
+$('#tb').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  if(!st.fokus?.isConnected)return toast('Klik dulu di kolom yang ingin diisi.',true);
+  if(b.dataset.x){pulih();document.execCommand(b.dataset.x);ubah()}
+  else if(b.dataset.s)sisip(esc(b.dataset.s));
+  else if(b.dataset.a)AKSI[b.dataset.a]()});
+$('#f').addEventListener('click',e=>{const m=e.target.closest('.mf');if(!m)return;
+  const ed=m.closest('.rt');st.fokus=ed;
+  const t=tanya('Ubah rumus. Kosongkan untuk menghapus.',m.dataset.tex);if(t===null)return;
+  if(t.trim()==='')m.remove();else{m.dataset.tex=t;rumusi(ed)}ubah()});
+$('#f').addEventListener('paste',e=>{if(!e.target.closest('.rt'))return;e.preventDefault();
+  const h=e.clipboardData.getData('text/html'),t=e.clipboardData.getData('text/plain');
+  document.execCommand('insertHTML',false,h?bersih(h):esc(t).replace(/\n/g,'<br>'))});
 
 masuk();
 </script>
