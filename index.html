@@ -32,14 +32,24 @@ main{display:grid;grid-template-columns:300px 1fr;gap:16px;padding:16px;max-widt
 .kn label{margin:0;color:var(--tx)}.im{display:flex;gap:8px;align-items:center;margin-top:6px}.im img{height:44px;border-radius:4px}
 .pi{max-width:100%;max-height:220px;border-radius:6px}.pt{max-height:90px;border-radius:4px;margin-top:4px}
 .po{display:block;color:var(--tx);padding:6px 0}table{border-collapse:collapse}table.kt{width:100%}td,th{border:1px solid var(--bd);padding:6px;text-align:left;vertical-align:top}
-.tb{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;gap:6px 16px;padding:8px 10px}.tb span{display:flex;gap:3px;flex-wrap:wrap}
-.tb button{padding:4px 9px;font-weight:400;background:transparent;color:var(--tx);border:1px solid var(--bd)}.tb button:hover{background:var(--sel)}
 .fld{margin:8px 0;font-size:.92rem;color:var(--mu)}.fld .rt{margin-top:3px}
 .rt{min-height:44px;background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:8px;color:var(--tx)}.rt.sm{min-height:36px}.rt:empty::before{content:attr(data-ph);color:var(--mu)}
 .mf{display:inline-block;padding:0 2px;border-radius:3px;cursor:pointer}.rt .mf:hover{background:var(--sel)}.ri>*{margin:.3em 0}.ri{overflow-x:auto}
 .narrow{max-width:380px;margin:12vh auto}
 #toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--tx);color:var(--bg);padding:10px 16px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw}
 #toast.show{opacity:1}#toast.err{background:var(--er);color:#fff}
+.tb{position:sticky;top:0;z-index:8;display:flex;flex-wrap:wrap;align-items:center;gap:2px;padding:6px 8px}
+.sep{width:1px;height:22px;background:var(--bd);margin:0 6px}.dd{position:relative}
+.tbn{position:relative;min-width:34px;height:34px;padding:0 7px;display:inline-flex;align-items:center;justify-content:center;gap:2px;background:transparent;color:var(--tx);border:1px solid transparent;border-radius:6px;font-weight:400}
+.tbn:hover,.mi:hover,.gi:hover{background:var(--sel);border-color:var(--bd)}.tbn small{font-size:.65rem;color:var(--mu)}.ic{font-size:1.05rem;font-weight:700}
+[data-tip]:hover::after{content:attr(data-tip);position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--tx);color:var(--bg);padding:3px 8px;border-radius:5px;font-size:.8rem;font-weight:400;white-space:nowrap;z-index:40;pointer-events:none}
+.menu{position:absolute;top:calc(100% + 4px);left:0;z-index:30;background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:6px;min-width:190px;box-shadow:0 6px 20px rgba(0,0,0,.18)}
+.mi{display:flex;align-items:center;gap:10px;width:100%;padding:6px 10px;background:transparent;color:var(--tx);border:1px solid transparent;border-radius:6px;font-weight:400;text-align:left}
+.sg{display:grid;grid-template-columns:repeat(5,36px);gap:3px}.eg{display:grid;grid-template-columns:repeat(3,84px);gap:4px;margin-bottom:4px}
+.gi{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:36px;padding:4px;background:transparent;color:var(--tx);border:1px solid var(--bd);border-radius:6px;font-weight:400;font-size:1rem}.gi small{font-size:.7rem;color:var(--mu)}
+.tg{display:grid;grid-template-columns:repeat(8,20px);gap:2px}.tg i{width:20px;height:20px;border:1px solid var(--bd);border-radius:3px;cursor:pointer}.tg i.on{background:var(--ac);border-color:var(--ac)}#tgl{margin:6px 0 4px;font-size:.85rem;color:var(--mu)}
+dialog{border:1px solid var(--bd);border-radius:12px;background:var(--card);color:var(--tx);padding:18px;width:min(380px,92vw)}dialog::backdrop{background:rgba(0,0,0,.45)}
+.dpv{min-height:56px;display:flex;align-items:center;justify-content:center;border:1px dashed var(--bd);border-radius:8px;margin:10px 0;font-size:1.3rem;overflow-x:auto}
 </style>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 </head>
@@ -59,17 +69,12 @@ main{display:grid;grid-template-columns:300px 1fr;gap:16px;padding:16px;max-widt
       <div id="daftar"></div>
     </aside>
     <section>
-    <div id="tb" class="card tb" aria-label="Alat format teks dan rumus">
-      <span><button data-x="bold"><b>B</b></button><button data-x="italic"><i>I</i></button><button data-x="underline"><u>U</u></button><button data-x="superscript" title="Pangkat, misalnya m3 menjadi m³">x²</button><button data-x="subscript" title="Indeks bawah">x₂</button></span>
-      <span><button data-x="justifyLeft">Kiri</button><button data-x="justifyCenter">Tengah</button><button data-x="justifyRight">Kanan</button><button data-x="justifyFull">Rata</button></span>
-      <span><button data-x="insertUnorderedList">Daftar</button><button data-x="insertOrderedList">Nomor</button><button data-x="removeFormat">Hapus format</button></span>
-      <span><button data-a="tabel">Tabel</button><button data-a="baris">+Baris</button><button data-a="kolom">+Kolom</button><button data-a="hapustabel">Hapus tabel</button></span>
-      <span><button data-a="pecahan">Pecahan</button><button data-a="campuran">Campuran</button><button data-a="akar">Akar</button><button data-a="rumus">Rumus lain</button></span>
-      <span><button data-s="×">×</button><button data-s="÷">÷</button><button data-s="±">±</button><button data-s="≤">≤</button><button data-s="≥">≥</button><button data-s="≠">≠</button><button data-s="π">π</button><button data-s="°">°</button><button data-s="√">√</button></span>
-    </div>
+    <div id="tb" class="card tb" aria-label="Alat format teks dan rumus"></div>
     <form id="f" class="card"></form><div id="pv" class="card"></div></section>
   </main>
 </div>
+<dialog id="dlg"><form method="dialog"><h3 id="dj"></h3><div id="dfl"></div><div id="dpv" class="dpv"></div>
+  <div class="row"><button value="ok">Sisipkan</button><button type="button" id="dbatal" class="ghost">Batal</button></div></form></dialog>
 <div id="toast" role="status"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
@@ -238,29 +243,78 @@ function pulih(){st.fokus.focus();if(st.rng){const s=getSelection();s.removeAllR
 function sisip(h){if(!st.fokus?.isConnected)return toast('Klik dulu di kolom yang ingin diisi.',true);
   pulih();document.execCommand('insertHTML',false,h);prep(st.fokus);ubah()}
 const rumus=t=>t&&sisip(`<span class="mf" data-tex="${esc(t)}"></span>&nbsp;`);
-const tanya=(p,d)=>prompt(p,d||'');
+const sv=b=>`<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">${b}</svg>`;
+const iRata=m=>sv([14,9,14,9].map((l,i)=>{const x=m==='right'?15-l:m==='center'?(16-l)/2:1,y=3+i*3.4;return `<line x1="${x}" x2="${x+(m==='full'?14:l)}" y1="${y}" y2="${y}"/>`}).join(''));
+const iDaftar=sv([3,8,13].map(y=>`<circle cx="2.5" cy="${y}" r="1" fill="currentColor"/><line x1="6" x2="15" y1="${y}" y2="${y}"/>`).join(''));
+const iTabel=sv('<rect x="1.5" y="2.5" width="13" height="11"/><line x1="1.5" x2="14.5" y1="8" y2="8"/><line x1="8" x2="8" y1="2.5" y2="13.5"/>');
 function sel(){const n=st.rng?.startContainer,el=n&&(n.nodeType===1?n:n.parentElement),td=el&&st.fokus?.contains(el)?el.closest('td,th'):null;
   if(!td)toast('Klik dulu di dalam sel tabel.',true);return td}
 const AKSI={
- pecahan(){const a=tanya('Pembilang (angka atas)'),b=a&&tanya('Penyebut (angka bawah)');a&&b&&rumus(`\\frac{${a}}{${b}}`)},
- campuran(){const w=tanya('Bilangan bulat'),a=w&&tanya('Pembilang'),b=a&&tanya('Penyebut');w&&a&&b&&rumus(`${w}\\frac{${a}}{${b}}`)},
- akar(){const a=tanya('Angka di bawah tanda akar');a&&rumus(`\\sqrt{${a}}`)},
- rumus(){rumus(tanya('Tulis rumus dengan format LaTeX, misalnya x^{2}+3x=10'))},
- tabel(){const r=+tanya('Jumlah baris','3'),k=+tanya('Jumlah kolom','3');
-  if(r>0&&k>0&&r<=20&&k<=10)sisip('<table>'+('<tr>'+'<td><br></td>'.repeat(k)+'</tr>').repeat(r)+'</table><p><br></p>')},
  baris(){const td=sel();if(!td)return;const tr=td.parentElement,n=tr.cloneNode(true);n.querySelectorAll('td,th').forEach(x=>x.innerHTML='<br>');tr.after(n);ubah()},
  kolom(){const td=sel();if(!td)return;const i=td.cellIndex;td.closest('table').querySelectorAll('tr').forEach(r=>{const c=document.createElement('td');c.innerHTML='<br>';r.cells[i]?.after(c)});ubah()},
  hapustabel(){const td=sel();if(!td)return;td.closest('table').remove();ubah()}};
-$('#tb').addEventListener('mousedown',e=>e.preventDefault());
-$('#tb').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+const tabelHtml=(r,k)=>'<table>'+('<tr>'+'<td><br></td>'.repeat(k)+'</tr>').repeat(r)+'</table><p><br></p>';
+const PERS={
+ pecahan:['Pecahan',[['a','Pembilang (angka atas)','1'],['b','Penyebut (angka bawah)','2']],v=>`\\frac{${v.a}}{${v.b}}`],
+ campuran:['Bilangan campuran',[['w','Bilangan bulat','2'],['a','Pembilang','1'],['b','Penyebut','4']],v=>`${v.w}\\frac{${v.a}}{${v.b}}`],
+ pangkat:['Pangkat',[['a','Bilangan dasar','x'],['b','Pangkat','2']],v=>`${v.a}^{${v.b}}`],
+ indeks:['Indeks bawah',[['a','Bilangan dasar','x'],['b','Indeks','1']],v=>`${v.a}_{${v.b}}`],
+ akar:['Akar kuadrat',[['a','Angka di dalam akar','25']],v=>`\\sqrt{${v.a}}`],
+ akarn:['Akar pangkat n',[['n','Pangkat akar','3'],['a','Angka di dalam akar','27']],v=>`\\sqrt[${v.n}]{${v.a}}`],
+ bebas:['Rumus lain (LaTeX)',[['t','Rumus','x^{2}+3x=10']],v=>v.t]};
+const CTH={pecahan:'\\frac{a}{b}',campuran:'n\\frac{a}{b}',pangkat:'x^{n}',indeks:'x_{n}',akar:'\\sqrt{x}',akarn:'\\sqrt[n]{x}'};
+const SIMB=[['×','Kali'],['÷','Bagi'],['±','Plus minus'],['≤','Kurang dari atau sama dengan'],['≥','Lebih dari atau sama dengan'],['≠','Tidak sama dengan'],['≈','Hampir sama dengan'],['π','Pi'],['°','Derajat'],['√','Akar'],['∞','Tak hingga'],['²','Kuadrat'],['³','Pangkat tiga'],['½','Setengah'],['¼','Seperempat'],['¾','Tiga perempat'],['△','Segitiga'],['∠','Sudut'],['⊥','Tegak lurus'],['∥','Sejajar']];
+
+function formulir(judul,fields,tpl,opsi){return new Promise(res=>{
+  const d=$('#dlg'),L=$('#dfl');$('#dj').textContent=judul;
+  L.innerHTML=fields.map(([k,l,df])=>`<label>${l}<input data-k="${k}" value="${esc(df)}" autocomplete="off"></label>`).join('');
+  const val=()=>Object.fromEntries([...L.querySelectorAll('input')].map(i=>[i.dataset.k,i.value.trim()]));
+  const pv=()=>katex.render(tpl(val())||' ',$('#dpv'),{throwOnError:false});
+  L.oninput=pv;pv();
+  d.onclose=()=>{const v=val();res(d.returnValue==='ok'&&(opsi?.kosong||Object.values(v).every(Boolean))?tpl(v):null)};
+  $('#dbatal').onclick=()=>d.close('batal');
+  d.returnValue='';d.showModal();L.querySelector('input').select()})}
+async function persamaan(k){const [j,f,t]=PERS[k],tex=await formulir(j,f,t);if(tex)rumus(tex)}
+
+function bangun(){
+  const T=(tip,x,h)=>`<button type="button" class="tbn" data-tip="${tip}" aria-label="${tip}" data-x="${x}">${h}</button>`;
+  const D=(tip,h,m)=>`<div class="dd"><button type="button" class="tbn" data-tip="${tip}" aria-label="${tip}" aria-haspopup="true" data-dd>${h}<small>▾</small></button><div class="menu" hidden>${m}</div></div>`;
+  const MI=(a,h,t)=>`<button type="button" class="mi" ${a}>${h}<span>${t}</span></button>`;
+  const sep='<i class="sep"></i>';
+  const rata=[['left','justifyLeft','Rata kiri'],['center','justifyCenter','Rata tengah'],['right','justifyRight','Rata kanan'],['full','justifyFull','Rata kiri-kanan']].map(([m,x,t])=>MI(`data-x="${x}"`,iRata(m),t)).join('');
+  const daftar=MI('data-x="insertUnorderedList"',iDaftar,'Daftar poin')+MI('data-x="insertOrderedList"','<b>1.</b>','Daftar bernomor');
+  const tabel='<div class="tg">'+Array.from({length:48},(_,i)=>`<i data-r="${Math.floor(i/8)+1}" data-c="${i%8+1}"></i>`).join('')+'</div><div id="tgl">Pilih ukuran tabel</div>'
+    +MI('data-a="baris"','+','Tambah baris di bawah')+MI('data-a="kolom"','+','Tambah kolom di kanan')+MI('data-a="hapustabel"','×','Hapus tabel');
+  const galeri='<div class="eg">'+Object.keys(CTH).map(k=>`<button type="button" class="gi" data-q="${k}" aria-label="${PERS[k][0]}">${katex.renderToString(CTH[k],{throwOnError:false})}<small>${PERS[k][0]}</small></button>`).join('')+'</div>'
+    +MI('data-q="bebas"','<span class="ic">∑</span>','Rumus lain (LaTeX)...');
+  const simb='<div class="sg">'+SIMB.map(([c,n])=>`<button type="button" class="gi" data-s="${c}" data-tip="${n}" aria-label="${n}">${c}</button>`).join('')+'</div>';
+  $('#tb').innerHTML=T('Urungkan','undo','↶')+T('Ulangi','redo','↷')+sep
+    +T('Tebal (Ctrl+B)','bold','<b>B</b>')+T('Miring (Ctrl+I)','italic','<i>I</i>')+T('Garis bawah (Ctrl+U)','underline','<u>U</u>')
+    +T('Pangkat, misalnya m3 menjadi m³','superscript','x<sup>2</sup>')+T('Indeks bawah','subscript','x<sub>2</sub>')+sep
+    +D('Rata teks',iRata('left'),rata)+D('Daftar',iDaftar,daftar)+D('Sisipkan tabel',iTabel,tabel)+sep
+    +D('Persamaan: pecahan, akar, pangkat','<span class="ic">π</span>',galeri)+D('Simbol','<span class="ic">Ω</span>',simb)+sep
+    +T('Hapus format teks','removeFormat','<span class="ic">Aa</span>')}
+bangun();
+const tb=$('#tb'),tutup=()=>tb.querySelectorAll('.menu').forEach(m=>m.hidden=true);
+tb.addEventListener('mousedown',e=>e.preventDefault());
+document.addEventListener('click',e=>{if(!e.target.closest('.dd'))tutup()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')tutup()});
+tb.addEventListener('mouseover',e=>{const c=e.target.closest('.tg i');if(!c)return;const r=+c.dataset.r,k=+c.dataset.c;
+  tb.querySelectorAll('.tg i').forEach(x=>x.classList.toggle('on',+x.dataset.r<=r&&+x.dataset.c<=k));$('#tgl').textContent=r+' × '+k+' kotak'});
+tb.addEventListener('click',e=>{const g=e.target.closest('.tg i'),b=e.target.closest('button');
+  if(b?.hasAttribute('data-dd')){const m=b.nextElementSibling,buka=m.hidden;tutup();m.hidden=!buka;return}
+  if(!g&&!b)return;tutup();
   if(!st.fokus?.isConnected)return toast('Klik dulu di kolom yang ingin diisi.',true);
-  if(b.dataset.x){pulih();document.execCommand(b.dataset.x);ubah()}
-  else if(b.dataset.s)sisip(esc(b.dataset.s));
-  else if(b.dataset.a)AKSI[b.dataset.a]()});
-$('#f').addEventListener('click',e=>{const m=e.target.closest('.mf');if(!m)return;
+  if(g)return sisip(tabelHtml(+g.dataset.r,+g.dataset.c));
+  const d=b.dataset;
+  if(d.x){pulih();document.execCommand(d.x);ubah()}
+  else if(d.s)sisip(esc(d.s));
+  else if(d.q)persamaan(d.q);
+  else if(d.a)AKSI[d.a]()});
+$('#f').addEventListener('click',async e=>{const m=e.target.closest('.mf');if(!m)return;
   const ed=m.closest('.rt');st.fokus=ed;
-  const t=tanya('Ubah rumus. Kosongkan untuk menghapus.',m.dataset.tex);if(t===null)return;
-  if(t.trim()==='')m.remove();else{m.dataset.tex=t;rumusi(ed)}ubah()});
+  const t=await formulir('Ubah rumus (kosongkan untuk menghapus)',[['t','Rumus (LaTeX)',m.dataset.tex]],v=>v.t,{kosong:true});
+  if(t===null)return;if(t==='')m.remove();else{m.dataset.tex=t;rumusi(ed)}ubah()});
 $('#f').addEventListener('paste',e=>{if(!e.target.closest('.rt'))return;e.preventDefault();
   const h=e.clipboardData.getData('text/html'),t=e.clipboardData.getData('text/plain');
   document.execCommand('insertHTML',false,h?bersih(h):esc(t).replace(/\n/g,'<br>'))});
