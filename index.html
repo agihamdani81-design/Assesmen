@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Editor Soal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef2f3;--card:#fff;--tx:#17262b;--mu:#5d7076;--bd:#cfdadd;--ac:#0d7a6b;--acx:#fff;--er:#b42318;--sel:#e2f1ee}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1719;--card:#172125;--tx:#e6eef0;--mu:#93a8ae;--bd:#2c3b40;--ac:#3fb8a5;--acx:#08201c;--er:#f97066;--sel:#1b3330}}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 "Atkinson Hyperlegible",system-ui,sans-serif}
+h2,h3{margin:.2em 0 .5em}h3{font-size:1rem}.mu{color:var(--mu)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:16px;margin-bottom:14px}
+input,select,textarea{width:100%;font:inherit;color:inherit;background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:8px}
+input[type=radio],input[type=checkbox]{width:auto}
+label{display:block;margin:8px 0;font-size:.92rem;color:var(--mu)}label input,label select,label textarea{margin-top:3px;color:var(--tx)}
+button,.btn{font:inherit;cursor:pointer;border:0;border-radius:6px;padding:8px 14px;background:var(--ac);color:var(--acx);font-weight:700;display:inline-block}
+button.ghost,.btn.ghost{background:transparent;color:var(--ac);border:1px solid var(--bd)}
+button.danger{background:transparent;color:var(--er);border:1px solid var(--er)}
+:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
+header{display:flex;gap:12px;align-items:center;padding:10px 18px;background:var(--card);border-bottom:1px solid var(--bd)}header b{flex:1;font-size:1.1rem}
+main{display:grid;grid-template-columns:300px 1fr;gap:16px;padding:16px;max-width:1100px;margin:auto}
+@media(max-width:800px){main{grid-template-columns:1fr}}
+.row{display:flex;gap:8px;align-items:center}.row input{flex:1}
+.it{padding:8px 10px;border-radius:6px;cursor:pointer;margin-top:6px;border:1px solid transparent}.it small{display:block;color:var(--mu)}.it:hover{border-color:var(--bd)}.it.on{background:var(--sel);border-color:var(--ac)}
+#daftar{max-height:70vh;overflow:auto;margin-top:8px}
+.g3{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+.op{display:grid;grid-template-columns:28px 1fr 110px auto;gap:8px;align-items:start;padding:8px 0;border-top:1px solid var(--bd)}
+@media(max-width:600px){.op{grid-template-columns:24px 1fr auto}.kn{grid-column:2}}
+.kn label{margin:0;color:var(--tx)}.im{display:flex;gap:8px;align-items:center;margin-top:6px}.im img{height:44px;border-radius:4px}
+.pi{max-width:100%;max-height:220px;border-radius:6px}.pt{max-height:90px;border-radius:4px;margin-top:4px}
+.po{display:block;color:var(--tx);padding:6px 0}table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid var(--bd);padding:6px;text-align:left}
+.narrow{max-width:380px;margin:12vh auto}
+#toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--tx);color:var(--bg);padding:10px 16px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw}
+#toast.show{opacity:1}#toast.err{background:var(--er);color:#fff}
+</style>
+</head>
+<body>
+<form id="lg" class="card narrow">
+  <h2>Masuk sebagai super admin</h2>
+  <label>Email<input id="em" type="email" required autocomplete="username"></label>
+  <label>Password<input id="pw" type="password" required autocomplete="current-password"></label>
+  <button type="submit">Masuk</button>
+</form>
+
+<div id="app" hidden>
+  <header><b>Editor soal</b><span id="who" class="mu"></span><button id="keluar" class="ghost" type="button">Keluar</button></header>
+  <main>
+    <aside class="card">
+      <div class="row"><input id="cari" placeholder="Cari soal" aria-label="Cari soal"><button id="baru" type="button">Soal baru</button></div>
+      <div id="daftar"></div>
+    </aside>
+    <section><form id="f" class="card"></form><div id="pv" class="card"></div></section>
+  </main>
+</div>
+<div id="toast" role="status"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
+<script>
+const SB_URL='https://owposvwxcmkvxhobtemv.supabase.co';
+const SB_KEY='sb_publishable_4X4gb8JhUISDj4-nH_NFrQ_GLV87x6q';
+const db=supabase.createClient(SB_URL,SB_KEY);
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pub=p=>db.storage.from('soal-gambar').getPublicUrl(p).data.publicUrl;
+const src=o=>o.prev||(o.gambar?pub(o.gambar):'');
+const T={pg:'Pilihan ganda',mcma:'MCMA',kategori:'Kategori'};
+const baris=()=>({teks:'',gambar:'',prev:'',file:null,benar:false,kat:0});
+const kosong=()=>({id:null,tipe:'pg',mapel:'',kelas:'',topik:'',teks:'',gambar:'',prev:'',file:null,labels:['Benar','Salah'],bobot:1,pembahasan:'',opsi:[baris(),baris(),baris(),baris()]});
+const st={user:null,list:[],cur:kosong()};
+
+function toast(m,e){const t=$('#toast');t.textContent=m;t.className=e?'err show':'show';clearTimeout(toast.t);toast.t=setTimeout(()=>t.className='',4000)}
+
+/* ---------- login ---------- */
+$('#lg').onsubmit=async e=>{e.preventDefault();
+  const {error}=await db.auth.signInWithPassword({email:$('#em').value.trim(),password:$('#pw').value});
+  if(error)return toast('Login gagal: '+error.message,true);masuk()};
+$('#keluar').onclick=async()=>{await db.auth.signOut();location.reload()};
+async function masuk(){
+  const {data:{session}}=await db.auth.getSession();if(!session)return;
+  const {data:p,error}=await db.from('profil').select('peran,nama').eq('id',session.user.id).maybeSingle();
+  if(error||!p||p.peran!=='super_admin'){await db.auth.signOut();return toast('Akun ini belum terdaftar sebagai super admin.',true)}
+  st.user=session.user;$('#who').textContent=p.nama;$('#lg').hidden=true;$('#app').hidden=false;
+  await muatDaftar();st.cur=kosong();form();
+}
+
+/* ---------- daftar soal ---------- */
+async function muatDaftar(){
+  const {data,error}=await db.from('soal').select('id,tipe,teks,mapel,kelas').order('dibuat_at',{ascending:false});
+  if(error)return toast(error.message,true);st.list=data;daftar()}
+function daftar(){const q=$('#cari').value.toLowerCase();
+  $('#daftar').innerHTML=st.list.filter(s=>s.teks.toLowerCase().includes(q)).map(s=>
+    `<div class="it ${s.id===st.cur.id?'on':''}" data-id="${s.id}"><small>${T[s.tipe]}${s.kelas?', kelas '+s.kelas:''}${s.mapel?', '+esc(s.mapel):''}</small>${esc(s.teks.slice(0,90))}</div>`).join('')
+    ||'<p class="mu">Belum ada soal. Mulai dengan menulis soal pertama.</p>'}
+$('#cari').oninput=daftar;
+$('#daftar').onclick=e=>{const d=e.target.closest('.it');if(d)buka(d.dataset.id)};
+$('#baru').onclick=()=>{st.cur=kosong();form();daftar()};
+async function buka(id){
+  const {data,error}=await db.from('soal').select('*,opsi(*,kunci(*))').eq('id',id).single();
+  if(error)return toast(error.message,true);
+  const ops=(data.opsi||[]).sort((a,b)=>a.urutan-b.urutan).map(o=>{const k=Array.isArray(o.kunci)?o.kunci[0]:o.kunci;
+    return{teks:o.teks||'',gambar:o.gambar_path||'',prev:'',file:null,benar:!!k?.benar,kat:k?.kategori_benar??0}});
+  st.cur={id:data.id,tipe:data.tipe,mapel:data.mapel||'',kelas:data.kelas??'',topik:data.topik||'',teks:data.teks,
+    gambar:data.gambar_path||'',prev:'',file:null,labels:data.label_kategori||['Benar','Salah'],bobot:data.bobot,
+    pembahasan:data.pembahasan||'',opsi:ops};
+  form();daftar()}
+
+/* ---------- formulir ---------- */
+function imgBox(k,i,o){const s=src(o);
+  return `<div class="im"><label class="btn ghost" style="margin:0">${s?'Ganti gambar':'Tambah gambar'}<input type="file" accept="image/*" hidden data-k="${k}" data-i="${i}"></label>${s?`<img src="${esc(s)}" alt=""><button type="button" class="ghost" data-act="rmimg" data-k="${k}" data-i="${i}">Hapus gambar</button>`:''}</div>`}
+function form(){const c=st.cur,kat=c.tipe==='kategori';
+  $('#f').innerHTML=`<h2>${c.id?'Edit soal':'Soal baru'}</h2>
+<div class="g3"><label>Jenis soal<select name="tipe">${Object.entries(T).map(([k,v])=>`<option value="${k}" ${c.tipe===k?'selected':''}>${v}</option>`).join('')}</select></label>
+<label>Mata pelajaran<input name="mapel" value="${esc(c.mapel)}"></label>
+<label>Kelas<input name="kelas" type="number" min="1" max="6" value="${esc(c.kelas)}"></label>
+<label>Topik<input name="topik" value="${esc(c.topik)}"></label>
+<label>Bobot<input name="bobot" type="number" min="0.5" step="0.5" value="${esc(c.bobot)}"></label></div>
+<label>Pertanyaan<textarea name="teks" rows="3">${esc(c.teks)}</textarea></label>${imgBox('soal',0,c)}
+${kat?`<label>Pilihan kategori, pisahkan dengan koma<input name="labels" value="${esc(c.labels.join(', '))}"></label>`:''}
+<h3>${kat?'Pernyataan':'Pilihan jawaban'}</h3>
+${c.opsi.map((o,i)=>`<div class="op"><b>${kat?i+1:String.fromCharCode(65+i)}</b>
+<div><input name="ot${i}" placeholder="${kat?'Tulis pernyataan':'Tulis pilihan'}" value="${esc(o.teks)}" aria-label="Teks ${i+1}">${imgBox('opsi',i,o)}</div>
+<div class="kn">${c.tipe==='pg'?`<label><input type="radio" name="benar" value="${i}" ${o.benar?'checked':''}> Jawaban benar</label>`
+ :c.tipe==='mcma'?`<label><input type="checkbox" name="ck${i}" ${o.benar?'checked':''}> Jawaban benar</label>`
+ :`<select name="kat${i}" aria-label="Kategori yang benar">${c.labels.map((l,j)=>`<option value="${j}" ${o.kat===j?'selected':''}>${esc(l)}</option>`).join('')}</select>`}</div>
+<button type="button" class="ghost" data-act="rm" data-i="${i}" aria-label="Hapus baris">Hapus</button></div>`).join('')}
+<button type="button" class="ghost" data-act="add">Tambah ${kat?'pernyataan':'pilihan'}</button>
+<label>Pembahasan, opsional<textarea name="pembahasan" rows="2">${esc(c.pembahasan)}</textarea></label>
+<div class="row"><button type="submit" id="sv">Simpan soal</button>${c.id?'<button type="button" class="danger" data-act="del">Hapus soal</button>':''}</div>`;
+  pratinjau()}
+
+function collect(){const f=$('#f'),c=st.cur,v=n=>f.elements[n]?.value??'';
+  c.tipe=v('tipe');c.mapel=v('mapel');c.kelas=v('kelas');c.topik=v('topik');c.bobot=v('bobot');c.teks=v('teks');c.pembahasan=v('pembahasan');
+  if(c.tipe==='kategori'&&f.elements.labels)c.labels=v('labels').split(',').map(s=>s.trim()).filter(Boolean);
+  const sel=f.elements.benar?.value;
+  c.opsi.forEach((o,i)=>{o.teks=v('ot'+i);
+    if(c.tipe==='pg')o.benar=String(i)===sel;else if(c.tipe==='mcma')o.benar=!!f.elements['ck'+i]?.checked;else o.kat=+v('kat'+i)||0})}
+
+function pratinjau(){const c=st.cur,gb=o=>src(o)?`<br><img class="pt" src="${esc(src(o))}" alt="">`:'';
+  $('#pv').innerHTML=`<h3>Pratinjau tampilan siswa</h3><p>${esc(c.teks)||'<span class="mu">Pertanyaan akan tampil di sini.</span>'}</p>`
+  +(src(c)?`<img class="pi" src="${esc(src(c))}" alt="">`:'')
+  +(c.tipe==='kategori'
+    ?`<table><tr><th></th>${c.labels.map(l=>`<th>${esc(l)}</th>`).join('')}</tr>${c.opsi.map(o=>`<tr><td>${esc(o.teks)}${gb(o)}</td>${c.labels.map(()=>'<td><input type="radio" disabled></td>').join('')}</tr>`).join('')}</table>`
+    :c.opsi.map(o=>`<label class="po"><input type="${c.tipe==='pg'?'radio':'checkbox'}" disabled> ${esc(o.teks)}${gb(o)}</label>`).join(''))}
+
+/* ---------- gambar ---------- */
+async function kompres(file,maxW=900){
+  const b=await createImageBitmap(file),r=Math.min(1,maxW/b.width),cv=document.createElement('canvas');
+  cv.width=Math.round(b.width*r);cv.height=Math.round(b.height*r);cv.getContext('2d').drawImage(b,0,0,cv.width,cv.height);
+  return new Promise(res=>cv.toBlob(res,'image/webp',.8))}
+async function unggah(blob){const p=crypto.randomUUID()+'.webp';
+  const {error}=await db.storage.from('soal-gambar').upload(p,blob,{contentType:'image/webp'});if(error)throw error;return p}
+
+/* ---------- event formulir ---------- */
+const F=$('#f');
+F.addEventListener('input',()=>{collect();pratinjau()});
+F.addEventListener('change',async e=>{const t=e.target;
+  if(t.type==='file'){const file=t.files[0];if(!file)return;collect();
+    const o=t.dataset.k==='soal'?st.cur:st.cur.opsi[+t.dataset.i];
+    try{o.file=await kompres(file);o.prev=URL.createObjectURL(o.file)}catch{return toast('Gambar tidak bisa dibaca. Coba file lain.',true)}
+    return form()}
+  if(t.name==='tipe'||t.name==='labels'){collect();if(st.cur.labels.length<2)st.cur.labels=['Benar','Salah'];form()}});
+F.addEventListener('click',e=>{const a=e.target.dataset.act;if(!a)return;collect();
+  const c=st.cur,i=+e.target.dataset.i;
+  if(a==='add')c.opsi.push(baris());
+  if(a==='rm'){if(c.opsi.length<=2)return toast('Minimal ada 2 baris.',true);c.opsi.splice(i,1)}
+  if(a==='rmimg'){const o=e.target.dataset.k==='soal'?c:c.opsi[i];o.gambar='';o.prev='';o.file=null}
+  if(a==='del')return hapus();
+  form()});
+F.onsubmit=e=>{e.preventDefault();simpan()};
+
+/* ---------- simpan & hapus ---------- */
+function validasi(c){
+  if(!c.teks.trim())return'Pertanyaan belum diisi.';
+  if(c.opsi.some(o=>!o.teks.trim()&&!src(o)))return'Ada pilihan atau pernyataan yang masih kosong.';
+  const n=c.opsi.filter(o=>o.benar).length;
+  if(c.tipe==='pg'&&n!==1)return'Pilihan ganda harus punya tepat 1 jawaban benar.';
+  if(c.tipe==='mcma'&&n<2)return'MCMA harus punya minimal 2 jawaban benar.';
+  if(c.tipe==='kategori'&&c.labels.length<2)return'Isi minimal 2 pilihan kategori.';
+  if(c.tipe==='kategori'&&c.opsi.some(o=>o.kat>=c.labels.length))return'Ada kategori jawaban yang tidak valid.'}
+async function simpan(){
+  collect();const c=st.cur,err=validasi(c);if(err)return toast(err,true);
+  const b=$('#sv');b.disabled=true;b.textContent='Menyimpan...';
+  try{
+    if(c.file){c.gambar=await unggah(c.file);c.file=null}
+    for(const o of c.opsi)if(o.file){o.gambar=await unggah(o.file);o.file=null}
+    const row={tipe:c.tipe,mapel:c.mapel||null,kelas:c.kelas?+c.kelas:null,topik:c.topik||null,teks:c.teks,gambar_path:c.gambar||null,
+      label_kategori:c.tipe==='kategori'?c.labels:null,bobot:+c.bobot||1,pembahasan:c.pembahasan||null};
+    let id=c.id;
+    if(id){const r1=await db.from('soal').update(row).eq('id',id);if(r1.error)throw r1.error;
+      const r2=await db.from('opsi').delete().eq('soal_id',id);if(r2.error)throw r2.error}
+    else{row.dibuat_oleh=st.user.id;const r=await db.from('soal').insert(row).select('id').single();if(r.error)throw r.error;id=r.data.id}
+    const r3=await db.from('opsi').insert(c.opsi.map((o,i)=>({soal_id:id,urutan:i,teks:o.teks||null,gambar_path:o.gambar||null}))).select('id,urutan');
+    if(r3.error)throw r3.error;
+    const ops=r3.data.sort((a,b)=>a.urutan-b.urutan);
+    const r4=await db.from('kunci').insert(ops.map((r,i)=>c.tipe==='kategori'?{opsi_id:r.id,kategori_benar:c.opsi[i].kat}:{opsi_id:r.id,benar:!!c.opsi[i].benar}));
+    if(r4.error)throw r4.error;
+    toast('Soal tersimpan.');await muatDaftar();await buka(id);
+  }catch(e){toast('Gagal menyimpan: '+(e.message||e),true);b.disabled=false;b.textContent='Simpan soal'}}
+async function hapus(){
+  if(!confirm('Hapus soal ini? Soal yang sudah masuk paket ujian tidak bisa dihapus.'))return;
+  const {error}=await db.from('soal').delete().eq('id',st.cur.id);
+  if(error)return toast('Gagal menghapus: '+error.message,true);
+  toast('Soal dihapus.');st.cur=kosong();await muatDaftar();form()}
+
+masuk();
+</script>
+</body>
+</html>
